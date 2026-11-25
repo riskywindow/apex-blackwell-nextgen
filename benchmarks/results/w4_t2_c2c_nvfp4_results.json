@@ -1,0 +1,110 @@
+{
+  "grace_4tok_subcentroid_sdot": [
+    {
+      "L": 65536,
+      "sub_centroids_4tok": 16384,
+      "us": 10.96,
+      "bw_gbs": 197.4
+    },
+    {
+      "L": 262144,
+      "sub_centroids_4tok": 65536,
+      "us": 13.89,
+      "bw_gbs": 622.8
+    },
+    {
+      "L": 1048576,
+      "sub_centroids_4tok": 262144,
+      "us": 30.52,
+      "bw_gbs": 1133.8
+    },
+    {
+      "L": 2097152,
+      "sub_centroids_4tok": 524288,
+      "us": 49.2,
+      "bw_gbs": 1406.7
+    }
+  ],
+  "single_layer_attn_us": {
+    "hbm_bf16": 16.46,
+    "ats_tma_bf16": 26.16,
+    "ats_tma_nvfp4": 19.92,
+    "nvfp4_speedup_vs_bf16_ats": 1.31,
+    "nvfp4_bf16eq_gbs": 105.3
+  },
+  "multibatch_48l_nvfp4_vs_bf16": [
+    {
+      "B": 1,
+      "hbm_bf16_ms": 6.67,
+      "ats_bf16_ms": 6.72,
+      "ats_nvfp4_ms": 6.56,
+      "bf16_ov_pct": 0.72,
+      "nvfp4_ov_pct": -1.59,
+      "nvfp4_tok_s": 152.4
+    },
+    {
+      "B": 4,
+      "hbm_bf16_ms": 8.62,
+      "ats_bf16_ms": 8.8,
+      "ats_nvfp4_ms": 8.58,
+      "bf16_ov_pct": 2.05,
+      "nvfp4_ov_pct": -0.49,
+      "nvfp4_tok_s": 466.4
+    },
+    {
+      "B": 8,
+      "hbm_bf16_ms": 11.46,
+      "ats_bf16_ms": 14.1,
+      "ats_nvfp4_ms": 12.45,
+      "bf16_ov_pct": 23.07,
+      "nvfp4_ov_pct": 8.66,
+      "nvfp4_tok_s": 642.6
+    },
+    {
+      "B": 16,
+      "hbm_bf16_ms": 16.97,
+      "ats_bf16_ms": 22.98,
+      "ats_nvfp4_ms": 18.45,
+      "bf16_ov_pct": 35.42,
+      "nvfp4_ov_pct": 8.71,
+      "nvfp4_tok_s": 867.3
+    },
+    {
+      "B": 32,
+      "hbm_bf16_ms": 28.11,
+      "ats_bf16_ms": 43.2,
+      "ats_nvfp4_ms": 34.06,
+      "bf16_ov_pct": 53.69,
+      "nvfp4_ov_pct": 21.18,
+      "nvfp4_tok_s": 939.5
+    }
+  ],
+  "qwen3_4tok_needle_audit": [
+    {
+      "L": 65536,
+      "quest_pct": 83.3,
+      "sub8_pct": 100.0,
+      "sub4_pct": 100.0,
+      "sub4_mass_pct": 100.0,
+      "sub4_cos": 1.0
+    },
+    {
+      "L": 262144,
+      "quest_pct": 50.0,
+      "sub8_pct": 66.7,
+      "sub4_pct": 100.0,
+      "sub4_mass_pct": 91.4,
+      "sub4_cos": 0.95574
+    },
+    {
+      "L": 1048576,
+      "quest_pct": 41.7,
+      "sub8_pct": 66.7,
+      "sub4_pct": 91.7,
+      "sub4_mass_pct": 81.77,
+      "sub4_cos": 0.90696
+    }
+  ],
+  "track": "W4_T2_C2C_SparseKV_NVFP4",
+  "elapsed_s": 12.34
+}

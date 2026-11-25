@@ -1,0 +1,109 @@
+{
+  "track": "W4_T3_16GPU_4Tray_IMEX_TwoRegime_Epi",
+  "world": 16,
+  "verify_xr16": {
+    "expected": 348.16,
+    "min": 348.0,
+    "max": 348.0,
+    "xr16_diffs": 0,
+    "total_elems": 1048576
+  },
+  "sweep": [
+    {
+      "M": 16,
+      "gemm_only_us": 8.33,
+      "epi_nvls_tilepipe_us": 23.98,
+      "epi_p2p_rs_sp_us": 27.55,
+      "epi_p2p_rs_mc_norm_us": 36.81,
+      "cublas_nccl16_ar_norm_us": 257.11,
+      "cublas_nccl16_rs_us": 176.23,
+      "best_2regime_ar_norm_us": 23.98,
+      "speedup_ar_vs_nccl16": 10.72,
+      "speedup_rs_vs_nccl16": 6.4
+    },
+    {
+      "M": 64,
+      "gemm_only_us": 8.91,
+      "epi_nvls_tilepipe_us": 43.62,
+      "epi_p2p_rs_sp_us": 28.43,
+      "epi_p2p_rs_mc_norm_us": 38.22,
+      "cublas_nccl16_ar_norm_us": 172.87,
+      "cublas_nccl16_rs_us": 139.93,
+      "best_2regime_ar_norm_us": 38.22,
+      "speedup_ar_vs_nccl16": 4.52,
+      "speedup_rs_vs_nccl16": 4.92
+    },
+    {
+      "M": 128,
+      "gemm_only_us": 8.72,
+      "epi_nvls_tilepipe_us": 64.65,
+      "epi_p2p_rs_sp_us": 30.46,
+      "epi_p2p_rs_mc_norm_us": 40.9,
+      "cublas_nccl16_ar_norm_us": 223.19,
+      "cublas_nccl16_rs_us": 140.16,
+      "best_2regime_ar_norm_us": 40.9,
+      "speedup_ar_vs_nccl16": 5.46,
+      "speedup_rs_vs_nccl16": 4.6
+    },
+    {
+      "M": 256,
+      "gemm_only_us": 8.8,
+      "epi_nvls_tilepipe_us": 112.09,
+      "epi_p2p_rs_sp_us": 33.94,
+      "epi_p2p_rs_mc_norm_us": 48.14,
+      "cublas_nccl16_ar_norm_us": 241.96,
+      "cublas_nccl16_rs_us": 142.52,
+      "best_2regime_ar_norm_us": 48.14,
+      "speedup_ar_vs_nccl16": 5.03,
+      "speedup_rs_vs_nccl16": 4.2
+    },
+    {
+      "M": 512,
+      "gemm_only_us": 14.91,
+      "epi_nvls_tilepipe_us": 219.99,
+      "epi_p2p_rs_sp_us": 41.1,
+      "epi_p2p_rs_mc_norm_us": 61.33,
+      "cublas_nccl16_ar_norm_us": 218.24,
+      "cublas_nccl16_rs_us": 260.83,
+      "best_2regime_ar_norm_us": 61.33,
+      "speedup_ar_vs_nccl16": 3.56,
+      "speedup_rs_vs_nccl16": 6.35
+    },
+    {
+      "M": 1024,
+      "gemm_only_us": 29.47,
+      "epi_nvls_tilepipe_us": 441.2,
+      "epi_p2p_rs_sp_us": 58.78,
+      "epi_p2p_rs_mc_norm_us": 94.38,
+      "cublas_nccl16_ar_norm_us": 183.6,
+      "cublas_nccl16_rs_us": 148.94,
+      "best_2regime_ar_norm_us": 94.38,
+      "speedup_ar_vs_nccl16": 1.95,
+      "speedup_rs_vs_nccl16": 2.53
+    },
+    {
+      "M": 2048,
+      "gemm_only_us": 46.1,
+      "epi_nvls_tilepipe_us": 862.51,
+      "epi_p2p_rs_sp_us": 85.68,
+      "epi_p2p_rs_mc_norm_us": 151.83,
+      "cublas_nccl16_ar_norm_us": 239.18,
+      "cublas_nccl16_rs_us": 249.74,
+      "best_2regime_ar_norm_us": 151.83,
+      "speedup_ar_vs_nccl16": 1.58,
+      "speedup_rs_vs_nccl16": 2.91
+    },
+    {
+      "M": 4096,
+      "gemm_only_us": 91.93,
+      "epi_nvls_tilepipe_us": 1697.52,
+      "epi_p2p_rs_sp_us": 144.46,
+      "epi_p2p_rs_mc_norm_us": 267.6,
+      "cublas_nccl16_ar_norm_us": 374.74,
+      "cublas_nccl16_rs_us": 336.03,
+      "best_2regime_ar_norm_us": 267.6,
+      "speedup_ar_vs_nccl16": 1.4,
+      "speedup_rs_vs_nccl16": 2.33
+    }
+  ]
+}

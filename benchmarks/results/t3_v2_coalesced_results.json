@@ -1,0 +1,87 @@
+{
+  "verify": {
+    "bf16_r0": 102.5,
+    "swar_r0": 102.5,
+    "xr4_diffs": 0
+  },
+  "coalesced_sweep": [
+    {
+      "M": 16,
+      "gemm_only_us": 43.72,
+      "unfused_nvls_us": 60.26,
+      "coal_epi_bf16_us": 51.68,
+      "coal_epi_swar_us": 53.23,
+      "speedup_bf16_vs_unf": 1.166,
+      "speedup_swar_vs_unf": 1.132,
+      "exposed_coal_bf16_us": 7.96,
+      "exposed_unf_us": 16.54
+    },
+    {
+      "M": 64,
+      "gemm_only_us": 50.25,
+      "unfused_nvls_us": 70.81,
+      "coal_epi_bf16_us": 61.47,
+      "coal_epi_swar_us": 67.38,
+      "speedup_bf16_vs_unf": 1.152,
+      "speedup_swar_vs_unf": 1.051,
+      "exposed_coal_bf16_us": 11.22,
+      "exposed_unf_us": 20.56
+    },
+    {
+      "M": 128,
+      "gemm_only_us": 58.37,
+      "unfused_nvls_us": 84.74,
+      "coal_epi_bf16_us": 75.45,
+      "coal_epi_swar_us": 87.73,
+      "speedup_bf16_vs_unf": 1.123,
+      "speedup_swar_vs_unf": 0.966,
+      "exposed_coal_bf16_us": 17.07,
+      "exposed_unf_us": 26.37
+    },
+    {
+      "M": 256,
+      "gemm_only_us": 58.95,
+      "unfused_nvls_us": 98.56,
+      "coal_epi_bf16_us": 87.6,
+      "coal_epi_swar_us": 112.03,
+      "speedup_bf16_vs_unf": 1.125,
+      "speedup_swar_vs_unf": 0.88,
+      "exposed_coal_bf16_us": 28.65,
+      "exposed_unf_us": 39.6
+    },
+    {
+      "M": 512,
+      "gemm_only_us": 115.28,
+      "unfused_nvls_us": 184.57,
+      "coal_epi_bf16_us": 139.15,
+      "coal_epi_swar_us": 169.7,
+      "speedup_bf16_vs_unf": 1.326,
+      "speedup_swar_vs_unf": 1.088,
+      "exposed_coal_bf16_us": 23.87,
+      "exposed_unf_us": 69.29
+    },
+    {
+      "M": 1024,
+      "gemm_only_us": 230.61,
+      "unfused_nvls_us": 368.09,
+      "coal_epi_bf16_us": 244.08,
+      "coal_epi_swar_us": 290.19,
+      "speedup_bf16_vs_unf": 1.508,
+      "speedup_swar_vs_unf": 1.268,
+      "exposed_coal_bf16_us": 13.47,
+      "exposed_unf_us": 137.48
+    },
+    {
+      "M": 4096,
+      "gemm_only_us": 893.61,
+      "unfused_nvls_us": 1306.64,
+      "coal_epi_bf16_us": 920.87,
+      "coal_epi_swar_us": 961.9,
+      "speedup_bf16_vs_unf": 1.419,
+      "speedup_swar_vs_unf": 1.358,
+      "exposed_coal_bf16_us": 27.26,
+      "exposed_unf_us": 413.02
+    }
+  ],
+  "elapsed_s": 3.5
+}

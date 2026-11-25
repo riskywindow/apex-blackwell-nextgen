@@ -1,0 +1,57 @@
+{
+  "track": "W2_T1_48L_Qwen3_Dual_NVFP4",
+  "elapsed_s": 303.53,
+  "S_tokens": 21,
+  "adapt50_avg_act_skip_rate": 0.5757,
+  "adapt50_avg_wt_skip_rate": 0.4855,
+  "qwen3_48layer_audit": {
+    "BF16": {
+      "kl": -0.0,
+      "top1": 1.0,
+      "logit_sqnr_db": 314.72,
+      "moe_jaccard": 1.0
+    },
+    "MXFP8": {
+      "kl": 0.063627,
+      "top1": 0.8571,
+      "logit_sqnr_db": 23.85,
+      "moe_jaccard": 0.9465
+    },
+    "MXFP6": {
+      "kl": 0.09822,
+      "top1": 0.9048,
+      "logit_sqnr_db": 18.07,
+      "moe_jaccard": 0.9421
+    },
+    "NVFP4_1t": {
+      "kl": 0.174679,
+      "top1": 0.7143,
+      "logit_sqnr_db": 15.65,
+      "moe_jaccard": 0.8824
+    },
+    "NVFP4_FWHT128": {
+      "kl": 0.376016,
+      "top1": 0.619,
+      "logit_sqnr_db": 11.93,
+      "moe_jaccard": 0.8659
+    },
+    "Dual2_W4A44": {
+      "kl": 0.145552,
+      "top1": 0.8095,
+      "logit_sqnr_db": 17.41,
+      "moe_jaccard": 0.9066
+    },
+    "Dual3": {
+      "kl": 0.030903,
+      "top1": 0.9048,
+      "logit_sqnr_db": 25.6,
+      "moe_jaccard": 0.969
+    },
+    "Dual3_Adapt50": {
+      "kl": 0.076669,
+      "top1": 0.8095,
+      "logit_sqnr_db": 20.78,
+      "moe_jaccard": 0.9306
+    }
+  }
+}

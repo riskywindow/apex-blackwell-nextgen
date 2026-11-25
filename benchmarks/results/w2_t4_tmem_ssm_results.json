@@ -1,0 +1,133 @@
+{
+  "track": "W2_T4_TMEM_SSM",
+  "elapsed_s": 4.92,
+  "verify_c128": {
+    "o_cos": 0.9999887943267822,
+    "h_cos": 0.9999951124191284
+  },
+  "part4a_c128_prefill": [
+    {
+      "L": 4096,
+      "tmem_c128_us": 367.58,
+      "tmem_c128_tf": 222.0,
+      "triton_c64_us": 364.03,
+      "triton_c128_us": 373.18,
+      "triton_c128_tf": 218.7,
+      "speedup_vs_tri64": 0.99,
+      "speedup_vs_tri128": 1.015,
+      "hbm_state_saved_gb_c128": 0.16
+    },
+    {
+      "L": 16384,
+      "tmem_c128_us": 1430.68,
+      "tmem_c128_tf": 228.2,
+      "triton_c64_us": 1374.43,
+      "triton_c128_us": 1462.59,
+      "triton_c128_tf": 223.2,
+      "speedup_vs_tri64": 0.961,
+      "speedup_vs_tri128": 1.022,
+      "hbm_state_saved_gb_c128": 0.64
+    },
+    {
+      "L": 65536,
+      "tmem_c128_us": 5701.2,
+      "tmem_c128_tf": 229.0,
+      "triton_c64_us": 5367.57,
+      "triton_c128_us": 5848.83,
+      "triton_c128_tf": 223.2,
+      "speedup_vs_tri64": 0.941,
+      "speedup_vs_tri128": 1.026,
+      "hbm_state_saved_gb_c128": 2.55
+    },
+    {
+      "L": 131072,
+      "tmem_c128_us": 11398.23,
+      "tmem_c128_tf": 229.1,
+      "triton_c64_us": 10692.17,
+      "triton_c128_us": 11647.82,
+      "triton_c128_tf": 224.2,
+      "speedup_vs_tri64": 0.938,
+      "speedup_vs_tri128": 1.022,
+      "hbm_state_saved_gb_c128": 5.1
+    },
+    {
+      "L": 262144,
+      "tmem_c128_us": 22779.69,
+      "tmem_c128_tf": 229.3,
+      "triton_c64_us": 21324.37,
+      "triton_c128_us": 23269.4,
+      "triton_c128_tf": 224.4,
+      "speedup_vs_tri64": 0.936,
+      "speedup_vs_tri128": 1.021,
+      "hbm_state_saved_gb_c128": 10.2
+    }
+  ],
+  "part4b_gated_deltanet_tree": [
+    {
+      "W": 1,
+      "tmem_fp32_us": 11.28,
+      "tmem_fp16sr_us": 13.02,
+      "hbm_graph_us": 10.33,
+      "speedup_fp32": 0.92,
+      "speedup_fp16sr": 0.79,
+      "fp32_max_diff": 7e-08,
+      "fp16sr_cos": 1.0,
+      "hbm_mb_saved": 10.0
+    },
+    {
+      "W": 4,
+      "tmem_fp32_us": 14.75,
+      "tmem_fp16sr_us": 18.41,
+      "hbm_graph_us": 36.93,
+      "speedup_fp32": 2.5,
+      "speedup_fp16sr": 2.01,
+      "fp32_max_diff": 9e-08,
+      "fp16sr_cos": 1.0,
+      "hbm_mb_saved": 69.7
+    },
+    {
+      "W": 8,
+      "tmem_fp32_us": 19.23,
+      "tmem_fp16sr_us": 25.64,
+      "hbm_graph_us": 73.08,
+      "speedup_fp32": 3.8,
+      "speedup_fp16sr": 2.85,
+      "fp32_max_diff": 1e-07,
+      "fp16sr_cos": 1.0,
+      "hbm_mb_saved": 149.4
+    },
+    {
+      "W": 16,
+      "tmem_fp32_us": 28.61,
+      "tmem_fp16sr_us": 40.03,
+      "hbm_graph_us": 151.19,
+      "speedup_fp32": 5.28,
+      "speedup_fp16sr": 3.78,
+      "fp32_max_diff": 1.2e-07,
+      "fp16sr_cos": 1.0,
+      "hbm_mb_saved": 308.8
+    },
+    {
+      "W": 32,
+      "tmem_fp32_us": 50.11,
+      "tmem_fp16sr_us": 74.44,
+      "hbm_graph_us": 296.75,
+      "speedup_fp32": 5.92,
+      "speedup_fp16sr": 3.99,
+      "fp32_max_diff": 1.3e-07,
+      "fp16sr_cos": 1.0,
+      "hbm_mb_saved": 627.6
+    },
+    {
+      "W": 64,
+      "tmem_fp32_us": 82.08,
+      "tmem_fp16sr_us": 125.19,
+      "hbm_graph_us": 572.19,
+      "speedup_fp32": 6.97,
+      "speedup_fp16sr": 4.57,
+      "fp32_max_diff": 1.2e-07,
+      "fp16sr_cos": 1.0,
+      "hbm_mb_saved": 1265.1
+    }
+  ]
+}

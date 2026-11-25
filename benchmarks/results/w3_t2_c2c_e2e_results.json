@@ -1,0 +1,96 @@
+{
+  "part2a_grace_int8_sdot_topk": [
+    {
+      "L": 131072,
+      "pages": 8192,
+      "int8_sdot_topk_us": 10.03,
+      "bw_gbs": 107.8
+    },
+    {
+      "L": 524288,
+      "pages": 32768,
+      "int8_sdot_topk_us": 11.28,
+      "bw_gbs": 383.3
+    },
+    {
+      "L": 1048576,
+      "pages": 65536,
+      "int8_sdot_topk_us": 21.23,
+      "bw_gbs": 407.6
+    },
+    {
+      "L": 2097152,
+      "pages": 131072,
+      "int8_sdot_topk_us": 17.23,
+      "bw_gbs": 1004.0
+    },
+    {
+      "L": 4194304,
+      "pages": 262144,
+      "int8_sdot_topk_us": 28.29,
+      "bw_gbs": 1223.1
+    }
+  ],
+  "part2c_multibatch_48l_coherent": [
+    {
+      "B": 1,
+      "hbm_p50_ms": 6.45,
+      "ats_p50_ms": 6.57,
+      "ats_p99_ms": 6.59,
+      "overhead_pct": 1.78,
+      "agg_tok_s": 152.3
+    },
+    {
+      "B": 4,
+      "hbm_p50_ms": 8.36,
+      "ats_p50_ms": 8.69,
+      "ats_p99_ms": 8.72,
+      "overhead_pct": 4.03,
+      "agg_tok_s": 460.2
+    },
+    {
+      "B": 8,
+      "hbm_p50_ms": 10.94,
+      "ats_p50_ms": 13.38,
+      "ats_p99_ms": 13.4,
+      "overhead_pct": 22.29,
+      "agg_tok_s": 598.1
+    },
+    {
+      "B": 16,
+      "hbm_p50_ms": 16.21,
+      "ats_p50_ms": 23.3,
+      "ats_p99_ms": 23.35,
+      "overhead_pct": 43.77,
+      "agg_tok_s": 686.7
+    }
+  ],
+  "part2b_qwen3_needle_audit": [
+    {
+      "L": 65536,
+      "k_sel_tokens": 2048,
+      "quest_needle_recall_pct": 83.3,
+      "c2c_int8_needle_recall_pct": 100.0,
+      "c2c_int8_attn_mass_pct": 100.0,
+      "c2c_int8_out_cos": 1.0
+    },
+    {
+      "L": 262144,
+      "k_sel_tokens": 2048,
+      "quest_needle_recall_pct": 50.0,
+      "c2c_int8_needle_recall_pct": 66.7,
+      "c2c_int8_attn_mass_pct": 83.28,
+      "c2c_int8_out_cos": 0.9183
+    },
+    {
+      "L": 1048576,
+      "k_sel_tokens": 2048,
+      "quest_needle_recall_pct": 41.7,
+      "c2c_int8_needle_recall_pct": 66.7,
+      "c2c_int8_attn_mass_pct": 68.74,
+      "c2c_int8_out_cos": 0.8539
+    }
+  ],
+  "track": "W3_T2_C2C_SparseKV_E2E",
+  "elapsed_s": 9.3
+}

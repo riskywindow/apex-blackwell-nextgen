@@ -1,0 +1,158 @@
+{
+  "track": "W2_T3_Epi_NVLS_8GPU_IMEX",
+  "world": 8,
+  "verify": {
+    "expected": 184.32,
+    "bf16_ranks": [
+      184.0,
+      184.0,
+      184.0,
+      184.0,
+      184.0,
+      184.0,
+      184.0,
+      184.0
+    ],
+    "swar_r0": 184.375,
+    "xr8_diffs_per_rank": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "part3a_8gpu_push_vs_pull_nccl8": [
+    {
+      "push_v4bf16": 12.22,
+      "push_u64": 12.13,
+      "pull_v4bf16": 17.74,
+      "nccl8": 79.1,
+      "bytes": 262144
+    },
+    {
+      "push_v4bf16": 20.7,
+      "push_u64": 20.92,
+      "pull_v4bf16": 26.73,
+      "nccl8": 84.46,
+      "bytes": 1048576
+    },
+    {
+      "push_v4bf16": 56.78,
+      "push_u64": 56.73,
+      "pull_v4bf16": 62.77,
+      "nccl8": 85.87,
+      "bytes": 4194304
+    },
+    {
+      "push_v4bf16": 202.67,
+      "push_u64": 202.63,
+      "pull_v4bf16": 206.52,
+      "nccl8": 104.97,
+      "bytes": 16777216
+    },
+    {
+      "push_v4bf16": 395.78,
+      "push_u64": 395.89,
+      "pull_v4bf16": 396.64,
+      "nccl8": 191.29,
+      "bytes": 33554432
+    }
+  ],
+  "part3b_8gpu_imex_sweep": [
+    {
+      "M": 16,
+      "tma_gemm_only_us": 13.05,
+      "unfused_nvls_norm_us": 35.51,
+      "epi_bf16_norm_us": 26.1,
+      "epi_bf16_tilepipe_norm_us": 23.4,
+      "epi_swar_u64_us": 24.91,
+      "cublas_nccl8_norm_us": 184.6,
+      "cublas_only_us": 24.59,
+      "speedup_epi_vs_unfused": 1.361,
+      "speedup_tilepipe_vs_unfused": 1.518,
+      "speedup_epi_vs_nccl8": 7.073
+    },
+    {
+      "M": 64,
+      "tma_gemm_only_us": 12.77,
+      "unfused_nvls_norm_us": 44.26,
+      "epi_bf16_norm_us": 35.04,
+      "epi_bf16_tilepipe_norm_us": 33.33,
+      "epi_swar_u64_us": 42.27,
+      "cublas_nccl8_norm_us": 201.6,
+      "cublas_only_us": 24.12,
+      "speedup_epi_vs_unfused": 1.263,
+      "speedup_tilepipe_vs_unfused": 1.328,
+      "speedup_epi_vs_nccl8": 5.753
+    },
+    {
+      "M": 128,
+      "tma_gemm_only_us": 12.94,
+      "unfused_nvls_norm_us": 56.27,
+      "epi_bf16_norm_us": 46.98,
+      "epi_bf16_tilepipe_norm_us": 44.92,
+      "epi_swar_u64_us": 66.49,
+      "cublas_nccl8_norm_us": 178.73,
+      "cublas_only_us": 24.2,
+      "speedup_epi_vs_unfused": 1.198,
+      "speedup_tilepipe_vs_unfused": 1.253,
+      "speedup_epi_vs_nccl8": 3.804
+    },
+    {
+      "M": 256,
+      "tma_gemm_only_us": 12.92,
+      "unfused_nvls_norm_us": 81.83,
+      "epi_bf16_norm_us": 70.96,
+      "epi_bf16_tilepipe_norm_us": 69.49,
+      "epi_swar_u64_us": 114.01,
+      "cublas_nccl8_norm_us": 224.74,
+      "cublas_only_us": 24.66,
+      "speedup_epi_vs_unfused": 1.153,
+      "speedup_tilepipe_vs_unfused": 1.178,
+      "speedup_epi_vs_nccl8": 3.167
+    },
+    {
+      "M": 512,
+      "tma_gemm_only_us": 23.42,
+      "unfused_nvls_norm_us": 139.7,
+      "epi_bf16_norm_us": 120.75,
+      "epi_bf16_tilepipe_norm_us": 134.28,
+      "epi_swar_u64_us": 211.67,
+      "cublas_nccl8_norm_us": 165.91,
+      "cublas_only_us": 23.34,
+      "speedup_epi_vs_unfused": 1.157,
+      "speedup_tilepipe_vs_unfused": 1.04,
+      "speedup_epi_vs_nccl8": 1.374
+    },
+    {
+      "M": 1024,
+      "tma_gemm_only_us": 43.74,
+      "unfused_nvls_norm_us": 258.79,
+      "epi_bf16_norm_us": 222.08,
+      "epi_bf16_tilepipe_norm_us": 250.21,
+      "epi_swar_u64_us": 405.4,
+      "cublas_nccl8_norm_us": 203.43,
+      "cublas_only_us": 27.54,
+      "speedup_epi_vs_unfused": 1.165,
+      "speedup_tilepipe_vs_unfused": 1.034,
+      "speedup_epi_vs_nccl8": 0.916
+    },
+    {
+      "M": 4096,
+      "tma_gemm_only_us": 148.59,
+      "unfused_nvls_norm_us": 960.82,
+      "epi_bf16_norm_us": 828.03,
+      "epi_bf16_tilepipe_norm_us": 937.86,
+      "epi_swar_u64_us": 1549.35,
+      "cublas_nccl8_norm_us": 351.74,
+      "cublas_only_us": 38.55,
+      "speedup_epi_vs_unfused": 1.16,
+      "speedup_tilepipe_vs_unfused": 1.024,
+      "speedup_epi_vs_nccl8": 0.425
+    }
+  ]
+}

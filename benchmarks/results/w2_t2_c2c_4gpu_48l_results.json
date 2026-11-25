@@ -1,0 +1,63 @@
+{
+  "verify_tma_ats_max_diff": 0.0,
+  "pool_total_gib": 96.0,
+  "part2a_1gpu_tma_vs_ldg": {
+    "hbm3e_p16_us": 20.26,
+    "ats_ldg128_p16_us": 25.06,
+    "ats_ldg256_p16_us": 25.66,
+    "ats_tma_p16_us": 25.53,
+    "ats_ldg256_p64_us": 25.72,
+    "ats_tma_p64_us": 23.65,
+    "stage_memcpy_p16_us": 292.95,
+    "stage_memcpy_p64_us": 93.82,
+    "ats_tma_p16_gbs": 82.2,
+    "ats_tma_p64_gbs": 88.7
+  },
+  "part2b_4gpu_192gib_scaling": {
+    "1gpu_ldg256": {
+      "us_per_layer": 25.65,
+      "agg_gbs": 81.8
+    },
+    "1gpu_tma": {
+      "us_per_layer": 25.49,
+      "agg_gbs": 82.3
+    },
+    "2gpu_samesock_ldg256": {
+      "us_per_layer": 27.14,
+      "agg_gbs": 154.5
+    },
+    "2gpu_samesock_tma": {
+      "us_per_layer": 26.1,
+      "agg_gbs": 160.7
+    },
+    "4gpu_dualsock_ldg256": {
+      "us_per_layer": 27.44,
+      "agg_gbs": 305.7
+    },
+    "4gpu_dualsock_tma": {
+      "us_per_layer": 26.11,
+      "agg_gbs": 321.2
+    },
+    "4gpu_plus_64sve2_ldg256": {
+      "us_per_layer": 28.08,
+      "agg_gbs": 298.8
+    },
+    "4gpu_plus_64sve2_tma": {
+      "us_per_layer": 26.08,
+      "agg_gbs": 321.7
+    }
+  },
+  "part2c_48layer_tp4_e2e_itl_ms": {
+    "B1_hbm_oracle_ms": 6.39,
+    "B1_ats_ldg256_192gb_ms": 6.59,
+    "B1_ats_tma_192gb_ms": 6.64,
+    "B1_stage_memcpy_ms": 36.33,
+    "B1_tma_overhead_pct": 3.82,
+    "B1_tma_speedup_vs_stage": 5.47,
+    "B4_hbm_oracle_ms": 8.32,
+    "B4_ats_ldg256_192gb_ms": 8.69,
+    "B4_ats_tma_192gb_ms": 8.8,
+    "B4_tma_overhead_pct": 5.83
+  },
+  "elapsed_s": 6.97
+}

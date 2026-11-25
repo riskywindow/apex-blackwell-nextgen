@@ -1,0 +1,90 @@
+{
+  "track": "W3_T4_Hybrid32L_TMEM_SSM_E2E",
+  "elapsed_s": 5.34,
+  "sweep": [
+    {
+      "W": 1,
+      "B": 4,
+      "ms_hbm_32l": 3.92,
+      "ms_tmem32_32l": 4.28,
+      "ms_tmem16sr_32l": 4.36,
+      "e2e_speedup_fp32": 0.92,
+      "e2e_speedup_fp16sr": 0.9,
+      "lin24_speedup_fp32": 0.48,
+      "lin24_ms_hbm": 0.24,
+      "lin24_ms_tmem32": 0.51,
+      "agg_toks_hbm": 1021.3,
+      "agg_toks_tmem32": 934.8
+    },
+    {
+      "W": 4,
+      "B": 4,
+      "ms_hbm_32l": 6.77,
+      "ms_tmem32_32l": 6.41,
+      "ms_tmem16sr_32l": 6.54,
+      "e2e_speedup_fp32": 1.06,
+      "e2e_speedup_fp16sr": 1.03,
+      "lin24_speedup_fp32": 1.4,
+      "lin24_ms_hbm": 0.87,
+      "lin24_ms_tmem32": 0.62,
+      "agg_toks_hbm": 1803.1,
+      "agg_toks_tmem32": 1904.4
+    },
+    {
+      "W": 8,
+      "B": 4,
+      "ms_hbm_32l": 7.68,
+      "ms_tmem32_32l": 6.55,
+      "ms_tmem16sr_32l": 6.75,
+      "e2e_speedup_fp32": 1.17,
+      "e2e_speedup_fp16sr": 1.14,
+      "lin24_speedup_fp32": 2.59,
+      "lin24_ms_hbm": 1.8,
+      "lin24_ms_tmem32": 0.69,
+      "agg_toks_hbm": 2394.7,
+      "agg_toks_tmem32": 2810.6
+    },
+    {
+      "W": 16,
+      "B": 4,
+      "ms_hbm_32l": 9.55,
+      "ms_tmem32_32l": 6.93,
+      "ms_tmem16sr_32l": 7.29,
+      "e2e_speedup_fp32": 1.38,
+      "e2e_speedup_fp16sr": 1.31,
+      "lin24_speedup_fp32": 3.95,
+      "lin24_ms_hbm": 3.58,
+      "lin24_ms_tmem32": 0.91,
+      "agg_toks_hbm": 2449.9,
+      "agg_toks_tmem32": 3376.1
+    },
+    {
+      "W": 32,
+      "B": 4,
+      "ms_hbm_32l": 13.45,
+      "ms_tmem32_32l": 8.02,
+      "ms_tmem16sr_32l": 8.69,
+      "e2e_speedup_fp32": 1.68,
+      "e2e_speedup_fp16sr": 1.55,
+      "lin24_speedup_fp32": 5.37,
+      "lin24_ms_hbm": 7.13,
+      "lin24_ms_tmem32": 1.33,
+      "agg_toks_hbm": 2023.0,
+      "agg_toks_tmem32": 3391.8
+    },
+    {
+      "W": 64,
+      "B": 4,
+      "ms_hbm_32l": 21.35,
+      "ms_tmem32_32l": 10.33,
+      "ms_tmem16sr_32l": 11.63,
+      "e2e_speedup_fp32": 2.07,
+      "e2e_speedup_fp16sr": 1.84,
+      "lin24_speedup_fp32": 6.48,
+      "lin24_ms_hbm": 14.04,
+      "lin24_ms_tmem32": 2.17,
+      "agg_toks_hbm": 1405.3,
+      "agg_toks_tmem32": 2903.9
+    }
+  ]
+}

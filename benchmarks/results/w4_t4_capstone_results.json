@@ -1,0 +1,118 @@
+{
+  "track": "W4_T4_TMEM_SSM_Capstone",
+  "elapsed_s": 9.25,
+  "eagle2_depth7_verify_cos": 0.9999991655349731,
+  "multibatch_eagle2_32l": [
+    {
+      "B": 1,
+      "heads": 32,
+      "W": 32,
+      "ms_hbm": 10.4,
+      "ms_tmem32": 5.45,
+      "ms_tmem16sr": 6.1,
+      "speedup_fp32": 1.91,
+      "speedup_fp16sr": 1.7,
+      "agg_tok_s_tmem32": 1247.2
+    },
+    {
+      "B": 2,
+      "heads": 64,
+      "W": 32,
+      "ms_hbm": 11.71,
+      "ms_tmem32": 6.24,
+      "ms_tmem16sr": 6.89,
+      "speedup_fp32": 1.88,
+      "speedup_fp16sr": 1.7,
+      "agg_tok_s_tmem32": 2177.9
+    },
+    {
+      "B": 4,
+      "heads": 128,
+      "W": 32,
+      "ms_hbm": 13.54,
+      "ms_tmem32": 8.08,
+      "ms_tmem16sr": 8.76,
+      "speedup_fp32": 1.68,
+      "speedup_fp16sr": 1.55,
+      "agg_tok_s_tmem32": 3365.1
+    },
+    {
+      "B": 8,
+      "heads": 256,
+      "W": 32,
+      "ms_hbm": 27.58,
+      "ms_tmem32": 20.06,
+      "ms_tmem16sr": 21.37,
+      "speedup_fp32": 1.37,
+      "speedup_fp16sr": 1.29,
+      "agg_tok_s_tmem32": 2711.5
+    },
+    {
+      "B": 16,
+      "heads": 512,
+      "W": 32,
+      "ms_hbm": 50.5,
+      "ms_tmem32": 37.44,
+      "ms_tmem16sr": 40.03,
+      "speedup_fp32": 1.35,
+      "speedup_fp16sr": 1.26,
+      "agg_tok_s_tmem32": 2906.4
+    }
+  ],
+  "prefetched_c128_prefill": [
+    {
+      "heads": 152,
+      "L": 16384,
+      "tmem_us": 1329.7,
+      "tmem_tf": 245.5,
+      "triton_c128_us": 1458.3,
+      "speedup": 1.097,
+      "hbm_state_saved_gb": 0.64
+    },
+    {
+      "heads": 152,
+      "L": 65536,
+      "tmem_us": 5269.5,
+      "tmem_tf": 247.8,
+      "triton_c128_us": 5801.3,
+      "speedup": 1.101,
+      "hbm_state_saved_gb": 2.55
+    },
+    {
+      "heads": 152,
+      "L": 131072,
+      "tmem_us": 10534.9,
+      "tmem_tf": 247.9,
+      "triton_c128_us": 11556.6,
+      "speedup": 1.097,
+      "hbm_state_saved_gb": 5.1
+    },
+    {
+      "heads": 304,
+      "L": 16384,
+      "tmem_us": 2643.9,
+      "tmem_tf": 246.9,
+      "triton_c128_us": 2905.5,
+      "speedup": 1.099,
+      "hbm_state_saved_gb": 1.28
+    },
+    {
+      "heads": 304,
+      "L": 65536,
+      "tmem_us": 10536.0,
+      "tmem_tf": 247.8,
+      "triton_c128_us": 11631.5,
+      "speedup": 1.104,
+      "hbm_state_saved_gb": 5.1
+    },
+    {
+      "heads": 304,
+      "L": 131072,
+      "tmem_us": 21124.0,
+      "tmem_tf": 247.2,
+      "triton_c128_us": 23216.1,
+      "speedup": 1.099,
+      "hbm_state_saved_gb": 10.2
+    }
+  ]
+}

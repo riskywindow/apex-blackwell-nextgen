@@ -1,0 +1,222 @@
+{
+  "verify_max_abs_diff_hbm_vs_ats": 0.0,
+  "part2a_gather_sweep": [
+    {
+      "name": "HBM3e_1M_P16_LDG128",
+      "L": 1048576,
+      "P": 16,
+      "us": 16.49,
+      "bw_gbs": 127.18
+    },
+    {
+      "name": "HBM3e_1M_P16_LDG256",
+      "L": 1048576,
+      "P": 16,
+      "us": 16.62,
+      "bw_gbs": 126.18
+    },
+    {
+      "name": "ATS_S0_2MB_64K_P16_L256",
+      "L": 65536,
+      "P": 16,
+      "us": 22.66,
+      "bw_gbs": 92.55
+    },
+    {
+      "name": "ATS_S0_2MB_256K_P16_L256",
+      "L": 262144,
+      "P": 16,
+      "us": 23.2,
+      "bw_gbs": 90.38
+    },
+    {
+      "name": "ATS_S0_2MB_1M_P1_L128",
+      "L": 1048576,
+      "P": 1,
+      "us": 24.16,
+      "bw_gbs": 86.79
+    },
+    {
+      "name": "ATS_S0_2MB_1M_P1_L256",
+      "L": 1048576,
+      "P": 1,
+      "us": 24.64,
+      "bw_gbs": 85.1
+    },
+    {
+      "name": "ATS_S0_2MB_1M_P4_L256",
+      "L": 1048576,
+      "P": 4,
+      "us": 24.63,
+      "bw_gbs": 85.16
+    },
+    {
+      "name": "ATS_S0_2MB_1M_P16_L128",
+      "L": 1048576,
+      "P": 16,
+      "us": 24.08,
+      "bw_gbs": 87.1
+    },
+    {
+      "name": "ATS_S0_2MB_1M_P16_L256",
+      "L": 1048576,
+      "P": 16,
+      "us": 24.63,
+      "bw_gbs": 85.16
+    },
+    {
+      "name": "ATS_S0_2MB_1M_P64_L256",
+      "L": 1048576,
+      "P": 64,
+      "us": 24.63,
+      "bw_gbs": 85.14
+    },
+    {
+      "name": "ATS_S0_4KB_1M_P16_L256",
+      "L": 1048576,
+      "P": 16,
+      "us": 25.61,
+      "bw_gbs": 81.89
+    },
+    {
+      "name": "ATS_S0_2MB_4M_P16_L256",
+      "L": 4194304,
+      "P": 16,
+      "us": 25.42,
+      "bw_gbs": 82.49
+    },
+    {
+      "name": "ATS_S0_4KB_4M_P16_L256",
+      "L": 4194304,
+      "P": 16,
+      "us": 25.53,
+      "bw_gbs": 82.13
+    },
+    {
+      "name": "ATS_S0_2MB_4M_P64_L256",
+      "L": 4194304,
+      "P": 64,
+      "us": 26.71,
+      "bw_gbs": 78.51
+    },
+    {
+      "name": "ATS_S1_REM_1M_P16_L256",
+      "L": 1048576,
+      "P": 16,
+      "us": 30.8,
+      "bw_gbs": 68.08
+    },
+    {
+      "name": "ATS_S1_REM_4M_P16_L256",
+      "L": 4194304,
+      "P": 16,
+      "us": 30.8,
+      "bw_gbs": 68.08
+    },
+    {
+      "name": "PinHost_S0_1M_P16_L256",
+      "L": 1048576,
+      "P": 16,
+      "us": 23.13,
+      "bw_gbs": 90.66
+    },
+    {
+      "name": "StageMemcpy_1M_P16",
+      "L": 1048576,
+      "P": 16,
+      "us": 301.28,
+      "bw_gbs": 6.96
+    },
+    {
+      "name": "StageMemcpy_1M_P64",
+      "L": 1048576,
+      "P": 64,
+      "us": 95.54,
+      "bw_gbs": 21.95
+    }
+  ],
+  "part2b_coexec_contention": [
+    {
+      "grace_threads": 0,
+      "cpu_solo_us": 0.0,
+      "cpu_solo_gbs": 0.0,
+      "cpu_coexec_us": 0.0,
+      "gpu_samesock_us": 25.93,
+      "gpu_samesock_gbs": 80.86,
+      "gpu_splitsock_us": 25.74,
+      "gpu_splitsock_gbs": 81.48
+    },
+    {
+      "grace_threads": 8,
+      "cpu_solo_us": 550.2,
+      "cpu_solo_gbs": 122.0,
+      "cpu_coexec_us": 1481.9,
+      "gpu_samesock_us": 25.79,
+      "gpu_samesock_gbs": 81.31,
+      "gpu_splitsock_us": 26.16,
+      "gpu_splitsock_gbs": 80.18
+    },
+    {
+      "grace_threads": 16,
+      "cpu_solo_us": 278.1,
+      "cpu_solo_gbs": 241.3,
+      "cpu_coexec_us": 622.6,
+      "gpu_samesock_us": 25.68,
+      "gpu_samesock_gbs": 81.67,
+      "gpu_splitsock_us": 26.02,
+      "gpu_splitsock_gbs": 80.61
+    },
+    {
+      "grace_threads": 32,
+      "cpu_solo_us": 186.9,
+      "cpu_solo_gbs": 359.1,
+      "cpu_coexec_us": 1245.9,
+      "gpu_samesock_us": 25.63,
+      "gpu_samesock_gbs": 81.84,
+      "gpu_splitsock_us": 25.9,
+      "gpu_splitsock_gbs": 80.98
+    },
+    {
+      "grace_threads": 48,
+      "cpu_solo_us": 158.8,
+      "cpu_solo_gbs": 422.5,
+      "cpu_coexec_us": 450.3,
+      "gpu_samesock_us": 26.04,
+      "gpu_samesock_gbs": 80.53,
+      "gpu_splitsock_us": 26.12,
+      "gpu_splitsock_gbs": 80.3
+    },
+    {
+      "grace_threads": 64,
+      "cpu_solo_us": 137.7,
+      "cpu_solo_gbs": 487.5,
+      "cpu_coexec_us": 508.4,
+      "gpu_samesock_us": 25.88,
+      "gpu_samesock_gbs": 81.04,
+      "gpu_splitsock_us": 25.96,
+      "gpu_splitsock_gbs": 80.78
+    }
+  ],
+  "tma_probe": {
+    "HBM3e": {
+      "mode": 0,
+      "ok": true,
+      "exact": 1,
+      "bw_gbs": 150.99
+    },
+    "PinnedHost_C2C": {
+      "mode": 1,
+      "ok": true,
+      "exact": 1,
+      "bw_gbs": 75.73
+    },
+    "UnpinnedATS_C2C": {
+      "mode": 2,
+      "ok": true,
+      "exact": 1,
+      "bw_gbs": 75.77
+    }
+  },
+  "track": "T2_C2C_SparseKV",
+  "elapsed_s": 10.35
+}
