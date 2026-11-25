@@ -1,0 +1,123 @@
+\documentclass[conference,10pt]{IEEEtran}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+
+\title{TMEM-SSM: Turning Blackwell's 256\,KB Tensor Memory into a Zero-HBM Recurrent State and Speculative Tree Engine for Hybrid LLMs}
+
+\author{\IEEEauthorblockN{Rishi Vinodkumar}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Frontier hybrid LLMs (Qwen3-Next, Nemotron-3, Kimi-Linear, MiniMax-M3) pair linear-attention / state-space layers (Gated DeltaNet, Mamba-2) with sparse full-attention layers ($3{:}1$ ratio). However, Hopper-era linear-attention kernels (\texttt{FLA} Triton, Mamba-2 SSD) face two critical bottlenecks: (1) chunkwise prefill materializes per-chunk $d{\times}d$ states in HBM3e ($10.2$--$20.4\text{ GB}$/layer at $256\text{K}$ context, exceeding HBM capacity across $24$ layers), and (2) speculative tree decoding collapses because verifying a draft tree of $W$ tokens requires cloning and rolling back $d{\times}d$ states in HBM ($O(W H d^2)$ traffic).
+
+We present \textbf{\texttt{TMEM-SSM}}, exploiting NVIDIA Blackwell's $256\text{ KB/SM}$ Tensor Memory (\texttt{TMEM}, $128\text{ lanes}\times 512\text{ cols}\times 32\text{b}$, $240.6\text{ TB/s}$ via \texttt{tcgen05.ld/st.x64}) and \textbf{Operand-A-in-TMEM \texttt{tcgen05.mma}}. By storing the transposed state $H = S^\top \in \mathbb{R}^{128\times 128}$ permanently inside \texttt{TMEM} ($64\text{ KB}$ \texttt{FP32} or $32\text{ KB}$ \texttt{FP16-SR}), inter-chunk readout $O_{\text{inter}}^\top = H_{c-1} Q_c^\top$ executes natively with Operand~A in \texttt{TMEM} (\textbf{zero transpose}, verified $\cos{=}1.000000$, \textbf{$1.132\times$ faster than A-in-SMEM}), and state update $H_c \leftarrow \gamma_c H_{c-1} + U_c^\top K_c$ accumulates in-place via \texttt{scaleD=1}. For speculative decoding, holding base state $H_0$ in \texttt{TMEM} cols $0$--$127$ and active DFS branch ancestors in cols $128$--$511$ ($4$ \texttt{FP32} slots or $8$ \texttt{cvt.rs.f16x2} \texttt{FP16-SR} depth-7 slots) enables \textbf{zero-HBM speculative tree verification} of full Householder Gated DeltaNet updates. Evaluated live on NVIDIA \texttt{GB200}:
+\begin{itemize}
+    \item \textbf{Up to $6.97\times$ Linear-Layer \& $2.07\times$ Full 32-Layer Hybrid-LLM Speedup:} On full Gated-DeltaNet Householder speculative tree verification ($152$ heads, $d{=}128$), \texttt{TMEM\_FP32} achieves \textbf{$2.50\times$} ($W{=}4$), \textbf{$5.28\times$} ($W{=}16$), and \textbf{$6.97\times$} ($W{=}64$: $82.1$ vs.\ $572.2\,\mu\text{s}$, saving $1.265\text{ GB}$/layer, error $\le 1.3{\times}10^{-7}$); 8-slot \texttt{FP16-SR} hits \textbf{$4.57\times$} on skewed depth-7 EAGLE-2 trees ($\cos{=}0.999999$).
+    \item \textbf{Shifting the Hybrid-LLM Speculative Optimum:} On a full 32-layer Hybrid-LLM ($24$ Gated DeltaNet + $8$ Full-Attn at $32\text{K}$ ctx, CUDA-Graph captured), \texttt{TMEM-SSM} delivers \textbf{$1.35\times$--$2.07\times$ full-model end-to-end speedup} across $B \in [1, 16]$ and $W \in [16, 64]$, shifting optimal tree width from $W^*{=}16$ ($2{,}450\text{ tok/s}$ HBM collapse) to \textbf{$W^*{=}32$ ($3{,}392\text{ tok/s}$, $+38.4\%$ peak throughput, $3.32\times$ over AR)}.
+    \item \textbf{Zero-HBM-State $C{=}128$ TMA-Prefetched Prefill:} Full-tile $C{=}128$ \texttt{TMEM-SSM} reaches \textbf{$247.9\text{ TF/s}$} ($O_{\cos}{=}0.999989$), beating \texttt{Triton-HBM} by \textbf{$1.10\times$} across $H \in \{152, 304\}$ and $L \in [16\text{K}, 131\text{K}]$ while eliminating \textbf{$10.20\text{ GB}$/layer ($245\text{ GB}$/model)} of HBM state.
+\end{itemize}
+\end{abstract}
+
+\section{Introduction}
+Hybrid linear-attention architectures such as Gated DeltaNet~\cite{yang2024gateddeltanet} and Mamba-2~\cite{dao2024mamba2} replace $O(L)$ KV caches in $75\%$ of layers with a fixed-size $d{\times}d$ matrix state $S_t \in \mathbb{R}^{128\times 128}$. Yet two painful memory walls persist on GPUs:
+\begin{enumerate}
+    \item \textbf{Prefill State Materialization:} Two-stage chunkwise Triton kernels (\texttt{FLA}) materialize every chunk's state $H_c$ in HBM3e so a parallel Stage~2 can compute outputs. At $L{=}256\text{K}$, $152$ heads, $C{=}128$, this allocates $10.2\text{ GB}$ \emph{per layer} ($245\text{ GB}$ across 24 linear layers---overflowing \texttt{GB200}'s entire $189.5\text{ GiB}$ HBM3e!).
+    \item \textbf{Speculative Tree Cloning Wall:} Unlike KV-cache attention (which verifies a $W$-node EAGLE-2/Medusa tree via a tree mask without copying KV), linear-attention states are mutated in-place at each token. Verifying a branching draft tree of $W{=}32$--$64$ tokens forces engines to read/write $2W$ copies of $[H, 128, 128]$ states in HBM3e ($628\text{ MB}$--$1.27\text{ GB}$ per layer), causing Hybrid-LLM speculative throughput to collapse above $W{=}16$.
+\end{enumerate}
+
+On Blackwell (\texttt{sm\_100a}), each SM integrates \textbf{$256\text{ KB}$ of dedicated Tensor Memory (\texttt{TMEM})} accessible at \textbf{$240.6\text{ TB/s}$} ($42\times$ HBM3e). A single $128{\times}128$ head state occupies just $64\text{ KB}$ in \texttt{FP32} ($1/4$ of \texttt{TMEM}) or $32\text{ KB}$ in \texttt{FP16} ($1/8$ of \texttt{TMEM}). \textbf{\texttt{TMEM-SSM}} turns \texttt{TMEM} into a zero-HBM recurrent state engine for both prefill and speculative tree verification.
+
+\section{Zero-Transpose Algebraic Layout \& \texttt{TMEM} Mapping}
+
+\subsection{Eliminating the \texttt{TMEM} Transpose Constraint}
+A key hardware constraint of \texttt{tcgen05.mma} is that Operand~A in \texttt{TMEM} is strictly $M$-lane-major ($128$ lanes $= M$, columns $= K$). Na\"ively storing $S \in \mathbb{R}^{d_k \times d_v}$ would force an expensive SMEM transpose between update ($S \mathrel{+}= K^\top U$) and readout ($O = Q S$).
+
+\begin{proposition}[Zero-Transpose Transposed-State Identity]
+Storing the transposed state $H = S^\top \in \mathbb{R}^{d_v \times d_k}$ ($128\text{ lanes} = d_v$, $128\text{ cols} = d_k$) aligns \emph{all four} chunkwise $C{=}128$ operations natively to full $128{\times}128$ \texttt{tcgen05.mma} tiles with zero \texttt{TMEM} transposes:
+\begin{align}
+O_{\text{inter}}^\top &= H_{c-1}^{\text{TMEM}} \, (Q_c \odot \mathbf{g}_q)^\top \quad (\text{A-in-TMEM } \texttt{tcgen05}), \\
+P_{\text{raw}} &= Q_c K_c^\top \to \texttt{TMEM}[384..511] \xrightarrow{\text{causal}} P_c, \\
+O_c^\top &= O_{\text{inter}}^\top + U_c^\top P_c^\top \quad (\text{in-place } \texttt{scaleD=1}), \\
+H_c &= \gamma_c H_{c-1} + U_c^\top (K_c \odot \mathbf{g}_k) \quad (\texttt{x64}\text{ decay} + \texttt{scaleD=1}).
+\end{align}
+\end{proposition}
+Direct silicon probing on \texttt{GB200} verifies \texttt{tcgen05.mma.cta\_group::1.kind::f16 [d], [a\_tmem], b\_desc, idesc, p} to $\max|\Delta| = 3.58{\times}10^{-7}$ ($\cos{=}1.000000$), executing in \textbf{$76.05\text{ cyc/MMA}$} vs.\ $86.05\text{ cyc/MMA}$ for A-in-SMEM (\textbf{$1.132\times$ faster}!). Using chunk size $C{=}128$ fills $100\%$ of all four $128{\times}128$ MMA tiles (vs.\ $50\%$ waste on $Q_c K_c^\top$ at $C{=}64$) and halves \texttt{TMEM} decay/shadow refresh overhead, while cross-chunk 1D \texttt{TMA} prefetches chunk $c{+}1$'s $(Q, K)$ overlapped with chunk $c$'s output drain.
+
+\subsection{Zero-HBM Speculative Tree Verification in \texttt{TMEM}}
+For Gated DeltaNet's full Householder update at tree node $w$ with parent state $H_{\text{par}}$:
+\begin{equation}
+\mathbf{u}_w = \beta_w (\mathbf{v}_w - g_w H_{\text{par}} \mathbf{k}_w), \quad H_w = g_w H_{\text{par}} + \mathbf{u}_w \mathbf{k}_w^\top, \quad \mathbf{o}_w = H_w \mathbf{q}_w.
+\end{equation}
+All three steps fuse into a \emph{single} \texttt{TMEM} \texttt{x64} pass per node! Traversing any arbitrary EAGLE-2 / Medusa draft tree in DFS order requires only $D_{\max}{+}1$ active ancestor slots in \texttt{TMEM}:
+\begin{itemize}
+    \item \textbf{4-Slot \texttt{FP32} Pool} (cols $0..511$, $128$ cols/slot): exact up to depth~$3$ ($\max|\Delta| \le 1.3{\times}10^{-7}$).
+    \item \textbf{8-Slot \texttt{FP16-SR} Pool} ($64$ cols/slot via native Blackwell \texttt{cvt.rs.f16x2.f32} + 1-cycle \texttt{xorshift32}): supports arbitrary skewed depth-$7$ EAGLE-2 trees in $256\text{ KB}$ \texttt{TMEM} with $\cos{=}0.999999$ and only one \texttt{H0} load + one committed leaf store per entire $W$-node tree!
+\end{itemize}
+
+\section{Live NVIDIA GB200 Silicon Evaluation}
+
+\subsection{Full Gated-DeltaNet Householder Tree Verification ($W{=}1..64$)}
+On $152$ heads ($100\%$ of \texttt{GB200} SMs, $d{=}128$) against a CUDA-Graph-captured HBM-checkpointed baseline, \texttt{TMEM\_FP32} accelerates full Householder tree verification by \textbf{$2.50\times$} ($W{=}4$: $14.8$ vs.\ $36.9\,\mu\text{s}$), \textbf{$3.80\times$} ($W{=}8$), \textbf{$5.28\times$} ($W{=}16$), \textbf{$5.92\times$} ($W{=}32$), and \textbf{$6.97\times$} ($W{=}64$: $82.1$ vs.\ $572.2\,\mu\text{s}$, saving $1.265\text{ GB}$/layer HBM traffic, $\max|\Delta|{=}1.2{\times}10^{-7}$). Eight-slot \texttt{FP16-SR} achieves \textbf{$2.01\times$--$4.57\times$} ($125.2$ vs.\ $572.2\,\mu\text{s}$ at $W{=}64$, $\cos{=}1.000000$) while doubling supported tree depth to $7$.
+
+\subsection{Full 32-Layer Hybrid-LLM End-to-End Serving ($32\text{K}$ Ctx)}
+We benchmarked a complete 32-layer Hybrid-LLM ($24$ Gated DeltaNet + $8$ Full-Attention at $32\text{K}$ ctx, $d_{\text{model}}{=}4096$, SwiGLU MLP, CUDA-Graph captured) across tree widths $W{=}1..64$ ($B{=}4$, Table~\ref{tab:hybrid_w}) and batch sizes $B{=}1..16$ on real skewed depth-7 EAGLE-2 trees ($W{=}32$, verified $\cos{=}0.999999$, Table~\ref{tab:hybrid_b}).
+
+\begin{table}[t]
+\centering
+\caption{Full 32-Layer Hybrid-LLM ($24$ Gated-DeltaNet + $8$ Full-Attn @ $32\text{K}$, $B{=}4$) Speculative Tree Verification ($W{=}1..64$, $\alpha{=}0.85$).}
+\label{tab:hybrid_w}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{rrrrrrrr}
+\toprule
+\textbf{$W$} & \textbf{HBM\_32L} & \textbf{TMEM\_FP32} & \textbf{TMEM\_16SR} & \textbf{E2E 32} & \textbf{Lin24} & \textbf{tok/s HBM} & \textbf{tok/s TMEM} \\
+\midrule
+$1$ & $3.92\text{ ms}$ & $4.28\text{ ms}$ & $4.36\text{ ms}$ & $0.92\times$ & $0.48\times$ & $1021$ & $935$ \\
+$8$ & $7.68\text{ ms}$ & $\mathbf{6.55\text{ ms}}$ & $6.75\text{ ms}$ & $\mathbf{1.17\times}$ & $2.59\times$ & $2395$ & $2811$ \\
+$16$ & $9.55\text{ ms}$ & $\mathbf{6.93\text{ ms}}$ & $7.29\text{ ms}$ & $\mathbf{1.38\times}$ & $3.95\times$ & $2450^*$ & $3376$ \\
+$32$ & $13.45\text{ ms}$ & $\mathbf{8.02\text{ ms}}$ & $8.69\text{ ms}$ & $\mathbf{1.68\times}$ & $5.37\times$ & $2023$ & $\mathbf{3392^*}$ \\
+$64$ & $21.35\text{ ms}$ & $\mathbf{10.33\text{ ms}}$ & $11.63\text{ ms}$ & $\mathbf{2.07\times}$ & $\mathbf{6.48\times}$ & $1405$ & $2904$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Multi-Batch 32-Layer Hybrid-LLM Scaling ($W{=}32$ Real Skewed EAGLE-2 Tree, $32\text{K}$ Context).}
+\label{tab:hybrid_b}
+\begin{tabular}{rrrrrrr}
+\toprule
+\textbf{$B$} & \textbf{Heads} & \textbf{HBM\_32L} & \textbf{TMEM\_FP32} & \textbf{TMEM\_16SR} & \textbf{E2E 32} & \textbf{E2E 16SR} \\
+\midrule
+$1$ & $32$ & $10.40\text{ ms}$ & $\mathbf{5.45\text{ ms}}$ & $6.10\text{ ms}$ & $\mathbf{1.91\times}$ & $1.70\times$ \\
+$2$ & $64$ & $11.71\text{ ms}$ & $\mathbf{6.24\text{ ms}}$ & $6.89\text{ ms}$ & $\mathbf{1.88\times}$ & $1.70\times$ \\
+$4$ & $128$ & $13.54\text{ ms}$ & $\mathbf{8.08\text{ ms}}$ & $8.76\text{ ms}$ & $\mathbf{1.68\times}$ & $1.55\times$ \\
+$8$ & $256$ & $27.58\text{ ms}$ & $\mathbf{20.06\text{ ms}}$ & $21.37\text{ ms}$ & $\mathbf{1.37\times}$ & $1.29\times$ \\
+$16$ & $512$ & $50.50\text{ ms}$ & $\mathbf{37.44\text{ ms}}$ & $40.03\text{ ms}$ & $\mathbf{1.35\times}$ & $1.26\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Crucially, \texttt{TMEM-SSM} shifts the Hybrid-LLM speculative optimum from $W^*{=}16$ ($2{,}450\text{ tok/s}$) to \textbf{$W^*{=}32$ ($3{,}392\text{ tok/s}$, $+38.4\%$ peak throughput, $3.32\times$ over AR)} and maintains $1.35\times$--$1.91\times$ end-to-end wins across $B{=}1..16$.
+
+\subsection{Zero-HBM-State $C{=}128$ TMA-Prefetched Prefill}
+Upgrading chunkwise prefill from $C{=}64$ ($134.4\text{ TF/s}$) to full-tile $C{=}128$ with cross-chunk 1D \texttt{TMA} prefetch lifts throughput $+84.4\%$ to \textbf{$247.9\text{ TF/s}$} ($O_{\cos}{=}0.999989$, $H_{\cos}{=}0.999995$), beating 2-stage \texttt{Triton-HBM C=128} by \textbf{$1.10\times$} across every tested $(H, L) \in \{152, 304\} \times \{16\text{K}, 64\text{K}, 128\text{K}\}$ ($10.53$ vs.\ $11.56\text{ ms}$ at $H{=}152, L{=}128\text{K}$; $21.12$ vs.\ $23.22\text{ ms}$ at $H{=}304$) while eliminating \textbf{$10.20\text{ GB}$/layer ($245\text{ GB}$/model)} of HBM state allocation.
+
+\section{Conclusion}
+\texttt{TMEM-SSM} reimagines Blackwell's $256\text{ KB}$ Tensor Memory as a zero-HBM recurrent state machine, delivering $1.10\times$ faster zero-HBM-state chunkwise prefill ($245\text{ GB}$ saved/model), $6.97\times$ faster Gated-DeltaNet tree verification, and up to $2.07\times$ full-model 32-layer Hybrid-LLM speculative serving speedups.
+
+\begin{thebibliography}{9}
+\bibitem{yang2024gateddeltanet} S.~Yang et al., ``Gated Delta Networks: Improving Mamba2 with Delta Rule,'' \emph{ICLR}, 2025.
+\bibitem{dao2024mamba2} T.~Dao and A.~Gu, ``Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality,'' \emph{ICML}, 2024.
+\bibitem{eagle2} Y.~Li et al., ``EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees,'' \emph{EMNLP}, 2024.
+\end{thebibliography}
+\end{document}

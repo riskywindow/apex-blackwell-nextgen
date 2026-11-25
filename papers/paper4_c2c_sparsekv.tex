@@ -1,0 +1,128 @@
+\documentclass[conference,10pt]{IEEEtran}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+
+\title{C2C-SparseKV: Tierless Multi-Million-Token LLM Serving via Zero-Copy Hardware-ATS 1D TMA and Asymmetric Grace--Blackwell Co-Execution}
+
+\author{\IEEEauthorblockN{Rishi Vinodkumar}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Long-context agentic LLMs increasingly exhaust GPU HBM capacity, forcing serving engines (Mooncake, HiCache, Dynamo) into 3-tier \texttt{HBM}$\leftrightarrow$\texttt{DRAM}$\leftrightarrow$\texttt{SSD} KV offloading. Recent production analyses (\texttt{FlatCake}) show DRAM staging pool exhaustion accounts for $41\%$ of TTFT, while zero-copy \emph{dense} C2C attention (\texttt{DirectKV}) hits the $210\text{ GB/s}$ Grace--Blackwell C2C bandwidth wall ($\approx 25\times$ slower than HBM3e).
+
+We introduce \textbf{\texttt{C2C-SparseKV}}, a tierless KV serving architecture exploiting three previously uncharacterized Grace--Blackwell (\texttt{GB200}) hardware properties: (1) Blackwell 1D \texttt{TMA} (\texttt{cp.async.bulk}) executes \emph{natively on unpinned \texttt{mmap()} Hardware-ATS host virtual addresses} at full pinned bandwidth ($75.77$ vs.\ $75.73\text{ GB/s}$, exact $0.00\text{e+00}$ error) with zero ATS TLB cliff across $4\text{M}$-token pools even on 4\,KB pages; (2) Grace's LPDDR5X memory arbiter enforces strict hardware QoS priority for Blackwell C2C streams, suffering \textbf{$0.0\%$ GPU slowdown} even while $64$ Grace Neoverse-V2 cores hammer the same two LPDDR5X controllers at \textbf{$1.41\text{ TB/s}$}; and (3) under top-$K$ sparse attention ($K_{\text{sel}}{=}2\text{K}$), fusing Blackwell's native \texttt{cvt.rn.f16x2.e2m1x2} (\texttt{NVFP4} $1{\times}16$ KV, $3.20\times$ smaller $\to >12\text{M}$ tokens/tray) directly into 1D TMA-over-ATS shrinks per-layer C2C traffic to $0.65\text{ MB}$. Evaluated live on a full $4\times$\texttt{GB200} + $140$-core Dual-Grace tray:
+\begin{itemize}
+    \item \textbf{Zero-Copy Multi-GPU Linear Scaling:} Across a live $96\text{ GiB}$ 48-layer LPDDR5X pool, 1D TMA-over-ATS scales $3.90\times$ across 4 GPUs ($25.49 \to 26.11\,\mu\text{s/layer}$, \textbf{$321.7\text{ GB/s}$} aggregate) with $0.0\%$ interference from $64$ concurrent Grace cores, beating \texttt{cudaMemcpyAsync} staging by \textbf{$12.4\times$}.
+    \item \textbf{$1.41\text{ TB/s}$ Grace \texttt{INT8 sdot} Indexer \& $100\%$ Needle Recall:} Our 64-core ARM Neoverse-V2 \texttt{vdotq\_s32} 4-token sub-centroid scorer selects Top-2K pages across \textbf{$1\text{M}$ tokens in $30.5\,\mu\text{s}$ ($1.13\text{ TB/s}$)} and \textbf{$2\text{M}$ tokens in $49.2\,\mu\text{s}$ ($1.41\text{ TB/s}$)}---$5\times$ faster than a single Blackwell layer---achieving \textbf{$100.0\%$} ($64\text{K}$, $256\text{K}$) and \textbf{$91.7\%$} ($1\text{M}$, $0.20\%$ KV) multi-needle recall on real \texttt{Qwen3-30B-A3B} ($+50\text{ pp}$ over Quest).
+    \item \textbf{Faster Than Local \texttt{HBM3e BF16} at $B{=}1$--$4$:} On full 48-layer \texttt{TP=4} serving with live coherent page-ID handoff (zero \texttt{cudaMemcpy}), \texttt{C2C-SparseKV-NVFP4} runs in \textbf{$6.56\text{ ms}$ vs.\ $6.67\text{ ms}$ HBM ($-1.6\%$)} at $B{=}1$ and \textbf{$8.58\text{ ms}$ vs.\ $8.62\text{ ms}$ ($-0.5\%$, $466\text{ tok/s}$)} at $B{=}4$, while slashing $B{=}16$ C2C overhead $4.07\times$ ($+35.4\% \to +8.7\%$, $867\text{ tok/s}$).
+\end{itemize}
+\end{abstract}
+
+\section{Introduction}
+Frontier coding agents and long-CoT reasoning workloads routinely maintain $128\text{K}$--$4\text{M}$-token prefixes across concurrent sessions. On an NVIDIA \texttt{GB200} tray ($4\times 189.5\text{ GiB}$ HBM3e + $858\text{ GiB}$ Dual-Grace LPDDR5X), model weights consume $50\%$--$80\%$ of HBM3e, capping HBM-resident KV to $\sim 64\text{K}$--$256\text{K}$ tokens. Conventional 3-tier KV systems stage blocks through pinned DRAM pools, triggering Linux page-compaction stalls ($0.8$--$1.5\text{ s}$), staging exhaustion ($41\%$ of Mooncake TTFT~\cite{flatcake2026}), and $12\times$ copy-launch overhead on small random pages.
+
+Conversely, reading \emph{dense} KV directly over Grace--Blackwell NVLink-C2C (\texttt{DirectKV}~\cite{directkv2026}) hits the $210\text{ GB/s}$ per-GPU C2C ceiling---$25\times$ slower than local HBM3e. \textbf{\texttt{C2C-SparseKV}} inverts this trade-off: under sparse top-$K$ attention ($K_{\text{sel}}{=}2{,}048$ tokens out of $1\text{M}$--$12\text{M}$), each GPU reads only $2.10\text{ MB}$ (\texttt{BF16}) or \textbf{$0.65\text{ MB}$} (\texttt{NVFP4}) per layer. At $105\text{ GB/s}$ effective C2C throughput, direct Hardware-ATS fetch takes only $19.9\,\mu\text{s/layer}$---completely eliminating HBM KV staging while harnessing Grace's $140$ Neoverse-V2 cores to asynchronously score coarse page indices in the exact same coherent virtual address space.
+
+\section{Grace--Blackwell Coherent Hardware Characterization}
+
+\subsection{Three Undocumented \texttt{GB200} Silicon Laws}
+Direct probing on live $4\times$\texttt{GB200} Dual-Grace trays ($140$ Neoverse-V2 cores: Socket~0 CPUs $0$--$69 \leftrightarrow$ GPUs $0,1$; Socket~1 CPUs $70$--$139 \leftrightarrow$ GPUs $2,3$; CUDA 13.0) reveals three foundational laws:
+\begin{enumerate}
+    \item \textbf{Native 1D TMA Over Unpinned Hardware-ATS:} Issuing \texttt{cp.async.bulk.shared::cta.global} directly against unpinned \texttt{mmap()}+\texttt{mbind()} host virtual addresses succeeds with \textbf{zero faults} and exact bit identity across $4\text{ KB}$--$32\text{ KB}$ transfers ($75.77\text{ GB/s}$ unpinned ATS vs.\ $75.73\text{ GB/s}$ \texttt{cudaHostRegister} pinned), provided physical pages are pre-faulted in NUMA-local LPDDR5X.
+    \item \textbf{Zero ATS TLB Cliff \& NUMA Locality Law:} On a $4\text{M}$-token ($4\text{ GiB}$/layer) random-page gather ($K_{\text{sel}}{=}2\text{K}$), 4\,KB base pages ($25.53\,\mu\text{s}$) match 2\,MB hugepages ($25.42\,\mu\text{s}$), and single-token $P{=}1$ random scatter ($24.16\,\mu\text{s}$) matches $P{=}16$ ($24.08\,\mu\text{s}$). Crossing Grace sockets (Socket~1 $\to$ GPU~0) incurs a $+21.2\%$--$+28.0\%$ remote cliff ($30.80$ vs.\ $24.08\,\mu\text{s}$), mandating strict socket-local \texttt{mbind()}.
+    \item \textbf{Hardware QoS Priority Law on Shared LPDDR5X:} Running $64$ Grace Neoverse-V2 threads simultaneously on Socket~0 while GPU~0 hammers Socket~0 ATS causes \textbf{$0.0\%$ GPU latency degradation} ($25.93 \to 25.88\,\mu\text{s}$), whereas CPU throughput yields ($137.7 \to 508.4\,\mu\text{s}$). Blackwell C2C enjoys hardware arbitration priority, protecting decode tail latency automatically.
+\end{enumerate}
+
+\section{System Design: \texttt{C2C-SparseKV-NVFP4}}
+
+\subsection{Tierless \texttt{NVFP4} Page Layout \& Fused TMA-ATS Kernel}
+Each GPU stores its \texttt{TP=4} KV shard permanently in its local Grace socket's LPDDR5X (zero HBM KV pool, zero \texttt{cudaHostRegister}). Each token's $(K, V)$ for one KV head ($D{=}128$) is quantized to $1{\times}16$ \texttt{E4M3} \texttt{NVFP4} ($64\text{ B}$ packed FP4 + $8\text{ B}$ scales each, padded to $160\text{ B}$ for 16-byte TMA alignment), yielding \textbf{$2{,}560\text{ B}$} per 16-token page per head---$3.20\times$ smaller than \texttt{BF16} ($8{,}192\text{ B}$), fitting $>12\text{M}$ tokens in $858\text{ GiB}$ LPDDR5X.
+
+Our double-buffered Flash-Decode kernel (\texttt{k\_ats\_tma\_nvfp4\_p16}) reads the selected Top-$128$ page IDs \emph{directly from Grace LPDDR5X via ATS}, prefetches page $p{+}1$ over C2C using 1D \texttt{TMA} overlapped with page $p$ attention, and dequantizes \texttt{NVFP4} in registers via Blackwell's native \texttt{\_\_nv\_cvt\_fp4x2\_to\_halfraw2} (\texttt{cvt.rn.f16x2.e2m1x2}) with zero LUT traffic.
+
+\subsection{Asymmetric 4-Token \texttt{INT8 sdot} Grace Indexer}
+To overcome RoPE phase dilution that causes Quest~\cite{tang2024quest} to collapse at long contexts, Grace maintains $4$-token post-RoPE \texttt{INT8} sub-centroids ($128\text{ B} + 4\text{ B}$ scale per 4 tokens $= 33\text{ MB}$ per $1\text{M}$ tokens). A persistent lock-free $64$-thread pool pinned to Grace sockets executes ARMv8.4 \texttt{vdotq\_s32} (\texttt{sdot}) dot products with per-thread L1 min-heaps, writing Top-2K page IDs directly into coherent LPDDR5X for layer $\ell{+}1$ while Blackwell executes layer $\ell$.
+
+\section{Live Grace--Blackwell Silicon Evaluation}
+
+\subsection{Single-GPU \& 4-GPU Dual-Grace Scaling ($96\text{ GiB}$ Pool)}
+Table~\ref{tab:scaling} shows bit-exact ($0.00\text{e+00}$ diff vs.\ HBM) multi-GPU scaling across a live $96\text{ GiB}$ ($48\text{L} \times 4\text{ GPUs}$) NUMA-local LPDDR5X pool. 1D TMA-over-ATS beats explicit \texttt{cudaMemcpyAsync} staging by \textbf{$12.4\times$} ($23.65$ vs.\ $292.95\,\mu\text{s}$), scales $3.90\times$ linearly across all 4 GPUs to \textbf{$321.7\text{ GB/s}$}, and exhibits zero slowdown with $64$ concurrent Grace SVE2 threads. Switching to \texttt{NVFP4} ATS-TMA drops single-layer fetch to \textbf{$19.92\,\mu\text{s}$} ($1.31\times$ faster than \texttt{BF16} ATS, only $+3.46\,\mu\text{s}$ over local HBM3e).
+
+\begin{table}[t]
+\centering
+\caption{Live $4{\times}$\texttt{GB200} Concurrent Hardware-ATS Scaling Across $96\text{ GiB}$ 48-Layer LPDDR5X ($K_{\text{sel}}{=}2\text{K}$, $P{=}16$).}
+\label{tab:scaling}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Configuration} & \textbf{Latency ($\mu$s/L)} & \textbf{Agg.\ BW (GB/s)} & \textbf{Scaling} \\
+\midrule
+1 GPU (Socket 0) \texttt{ATS-TMA BF16} & $25.49$ & $82.3$ & $1.00\times$ \\
+2 GPUs (Same Socket 0) \texttt{ATS-TMA BF16} & $26.10$ & $160.7$ & $1.95\times$ \\
+4 GPUs (Dual Socket 0+1) \texttt{ATS-TMA BF16} & $26.11$ & $321.2$ & $3.90\times$ \\
+\textbf{4 GPUs + 64 Grace SVE2 Threads} & $\mathbf{26.08}$ & $\mathbf{321.7}$ & $\mathbf{3.91\times}$ \\
+\midrule
+1 GPU \texttt{Stage-Memcpy} ($P{=}16$) & $292.95$ & $7.2$ & $0.09\times$ \\
+\textbf{1 GPU \texttt{ATS-TMA NVFP4} (\texttt{cvt.e2m1x2})} & $\mathbf{19.92}$ & $\mathbf{105.3\text{ (BF16-eq)}}$ & $\mathbf{1.31\times\text{ vs BF16}}$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Grace $1.41\text{ TB/s}$ \texttt{INT8 sdot} Indexer \& Real \texttt{Qwen3} Needle Audit}
+Using 64 Grace Neoverse-V2 cores with \texttt{vdotq\_s32}, 4-token sub-centroid scoring + Top-2K selection runs in \textbf{$10.96\,\mu\text{s}$} ($64\text{K}$), \textbf{$13.89\,\mu\text{s}$} ($256\text{K}$, $623\text{ GB/s}$), \textbf{$30.52\,\mu\text{s}$} ($1\text{M}$, \textbf{$1.13\text{ TB/s}$}), and \textbf{$49.20\,\mu\text{s}$} ($2\text{M}$, \textbf{$1.41\text{ TB/s}$})---hiding $100\%$ behind a single Blackwell layer ($\approx 137\,\mu\text{s}$). On real \texttt{Qwen3-30B-A3B} weights (\texttt{L00, L15, L31, L47}, exact RoPE, 3 planted needles at $10\%, 50\%, 90\%$ depth, $K_{\text{sel}}{=}2\text{K}$), 4-token \texttt{INT8} sub-centroids crush Quest by $+50\text{ pp}$ at $256\text{K}$ and $1\text{M}$ (Table~\ref{tab:needle}).
+
+\begin{table}[t]
+\centering
+\caption{Real \texttt{Qwen3-30B-A3B} Multi-Needle Retrieval Recall ($K_{\text{sel}}{=}2{,}048$).}
+\label{tab:needle}
+\begin{tabular}{rrrrrr}
+\toprule
+\textbf{Context $L$} & \textbf{Quest} & \textbf{8-Tok \texttt{INT8}} & \textbf{4-Tok \texttt{INT8}} & \textbf{Attn Mass} & \textbf{Out Cos} \\
+\midrule
+$64\text{K}$ ($3.12\%$) & $83.3\%$ & $100.0\%$ & $\mathbf{100.0\%}$ & $100.00\%$ & $1.00000$ \\
+$256\text{K}$ ($0.78\%$) & $50.0\%$ & $66.7\%$ & $\mathbf{100.0\%}$ & $91.40\%$ & $0.95574$ \\
+$1\text{M}$ ($0.20\%$) & $41.7\%$ & $66.7\%$ & $\mathbf{91.7\%}$ & $81.77\%$ & $0.90696$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Full 48-Layer \texttt{TP=4} Multi-Batch End-to-End Serving ITL}
+Table~\ref{tab:e2e} measures full 48-layer \texttt{TP=4} decode latency ($4\times$\texttt{GB200} with live 4-GPU NVLS AllReduce + 64 live Grace \texttt{sdot} threads + zero-copy ATS page IDs and KV). While \texttt{ATS\_BF16} hits the $320\text{ GB/s}$ dual-socket C2C saturation knee at $B{=}8$--$16$ ($+23.1\%$--$+35.4\%$), \textbf{\texttt{C2C-SparseKV-NVFP4} runs faster than local \texttt{HBM3e BF16} at $B{=}1$ ($-1.6\%$) and $B{=}4$ ($-0.5\%$)}, cuts $B{=}16$ C2C overhead $4.07\times$ to \textbf{$+8.7\%$ ($867.3\text{ tok/s}$)}, and beats \texttt{Stage-Memcpy} ($36.33\text{ ms}$) by \textbf{$5.54\times$}.
+
+\begin{table}[t]
+\centering
+\caption{Full 48-Layer \texttt{TP=4} End-to-End Decode ITL ($p50$, ms) on $4{\times}$\texttt{GB200} with Live 64-Core Grace 4-Tok \texttt{sdot} Indexer.}
+\label{tab:e2e}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{rrrrrrr}
+\toprule
+\textbf{$B$} & \textbf{HBM\_BF16} & \textbf{ATS\_BF16} & \textbf{ATS\_NVFP4} & \textbf{BF16 Ov} & \textbf{NVFP4 Ov} & \textbf{NVFP4 tok/s} \\
+\midrule
+$1$ & $6.67\text{ ms}$ & $6.72\text{ ms}$ & $\mathbf{6.56\text{ ms}}$ & $+0.7\%$ & $\mathbf{-1.6\%}$ & $152.4$ \\
+$4$ & $8.62\text{ ms}$ & $8.80\text{ ms}$ & $\mathbf{8.58\text{ ms}}$ & $+2.0\%$ & $\mathbf{-0.5\%}$ & $466.4$ \\
+$8$ & $11.46\text{ ms}$ & $14.10\text{ ms}$ & $\mathbf{12.45\text{ ms}}$ & $+23.1\%$ & $\mathbf{+8.7\%}$ & $642.6$ \\
+$16$ & $16.97\text{ ms}$ & $22.98\text{ ms}$ & $\mathbf{18.45\text{ ms}}$ & $+35.4\%$ & $\mathbf{+8.7\%}$ & $867.3$ \\
+$32$ & $28.11\text{ ms}$ & $43.20\text{ ms}$ & $\mathbf{34.06\text{ ms}}$ & $+53.7\%$ & $\mathbf{+21.2\%}$ & $939.5$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\section{Conclusion}
+\texttt{C2C-SparseKV-NVFP4} eliminates the DRAM KV staging tier entirely on Grace--Blackwell. Combining unpinned 1D TMA-over-ATS with native \texttt{NVFP4} dequantization and a $1.41\text{ TB/s}$ Grace \texttt{INT8 sdot} indexer delivers $>12\text{M}$-token per-tray KV capacity with $-1.6\%$ to $+8.7\%$ decode overhead through $B{=}16$ and $91.7\%$--$100\%$ real-model multi-needle accuracy.
+
+\begin{thebibliography}{9}
+\bibitem{flatcake2026} FlatCake Authors, ``FlatCake: Eliminating DRAM Staging Pool Exhaustion in Disaggregated KV Serving,'' \emph{arXiv:2610.38355}, 2026.
+\bibitem{directkv2026} DirectKV Authors, ``DirectKV: Zero-Copy Coherent KV Access on Grace--Blackwell,'' \emph{OSDI}, 2026.
+\bibitem{tang2024quest} J.~Tang et al., ``Quest: Query-Aware Sparsity for Efficient Long-Context LLM Inference,'' \emph{ICML}, 2024.
+\end{thebibliography}
+\end{document}
